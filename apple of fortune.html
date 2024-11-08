@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu de Sondage avec Solde et TVA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            text-align: center;
+            color: #333;
+        }
+        #quiz-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #ffffff;
+        }
+        .question {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+        .options {
+            list-style: none;
+            padding: 0;
+        }
+        .options li {
+            margin: 8px 0;
+        }
+        .option-label {
+            cursor: pointer;
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+        .option-label:hover {
+            background-color: #f0f0f0;
+        }
+        #next-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+        }
+        #result {
+            font-size: 1.5em;
+            margin-top: 20px;
+            color: #28a745;
+        }
+        #balance-container {
+            margin-bottom: 20px;
+        }
+        .balance {
+            font-size: 1.1em;
+            margin: 5px 0;
+        }
+        #bet-amount {
+            margin-top: 10px;
+        }
+        #withdraw-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            color: #fff;
+            background-color: #28a745;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Jeu de Sondage avec Solde et TVA</h1>
+    <div id="quiz-container">
+        <!-- Solde -->
+        <div id="balance-container">
+            <div class="balance" id="balance">Solde de mise: 1000 FCFA</div>
+            <div class="balance" id="withdrawal-balance">Solde de retrait: 0 FCFA</div>
+            <input type="number" id="bet-amount" placeholder="Mise (FCFA)" min="1" max="1000">
+        </div>
+
+        <div id="question-container">
+            <p class="question" id="question"></p>
+            <ul class="options" id="options"></ul>
+        </div>
+        <button id="next-button" onclick="nextQuestion()">Question suivante</button>
+        <button id="withdraw-button" onclick="withdraw()">Retirer</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Questions de sondage
+        const questions = [
+            {
+                question: "Quel est votre sport préféré ?",
+                options: ["Football", "Basketball", "Tennis", "Natation"],
+            },
+            {
+                question: "Quelle est votre couleur favorite ?",
+                options: ["Rouge", "Bleu", "Vert", "Jaune"],
+            },
+            {
+                question: "Quel est votre animal préféré ?",
+                options: ["Chien", "Chat", "Oiseau", "Poisson"],
+            },
+            {
+                question: "Quel est votre plat préféré ?",
+                options: ["Pizza", "Pâtes", "Sushi", "Salade"],
+            },
+            {
+                question: "Quelle est votre saison préférée ?",
+                options: ["Printemps", "Été", "Automne", "Hiver"],
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        const userResponses = [];
+        let balance = 1000;  // Solde de mise initial
+        let withdrawalBalance = 0;  // Solde de retrait initial
+        let betAmount = 0;  // Montant de la mise actuelle
+
+        // Fonction pour afficher une question
+        function displayQuestion() {
+            document.getElementById("next-button").style.display = "none";
+            const questionData = questions[currentQuestionIndex];
+            document.getElementById("question").textContent = questionData.question;
+            const optionsContainer = document.getElementById("options");
+            optionsContainer.innerHTML = ""; // Réinitialiser les options
+
+            questionData.options.forEach((option, index) => {
+                const li = document.createElement("li");
+                const label = document.createElement("label");
+                label.className = "option-label";
+                label.textContent = option;
+                label.onclick = () => selectOption(index);
+                li.appendChild(label);
+                optionsContainer.appendChild(li);
+            });
+        }
+
+        // Fonction pour sélectionner une option
+        function selectOption(selectedIndex) {
+            userResponses[currentQuestionIndex] = questions[currentQuestionIndex].options[selectedIndex];
+            document.getElementById("next-button").style.display = "block";
+
+            // Si une mise a été effectuée
+            if (betAmount > 0) {
+                balance -= betAmount;  // Déduire la mise
+                document.getElementById("balance").textContent = "Solde de mise: " + balance + " FCFA";
+            }
+        }
+
+        // Fonction pour passer à la question suivante
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                displayQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // Fonction pour afficher les résultats
+        function showResults() {
+            document.getElementById("question-container").style.display = "none";
+            document.getElementById("next-button").style.display = "none";
+            let resultHTML = "<h2>Vos réponses :</h2><ul>";
+            userResponses.forEach((response, index) => {
+                resultHTML += `<li><strong>${questions[index].question}</strong>: ${response}</li>`;
+            });
+            resultHTML += "</ul>";
+
+            // Ajouter le solde de mise aux gains ou perdre selon les réponses
+            if (userResponses.length === questions.length) {
+                withdrawalBalance += balance; // Transférer le solde de mise dans le solde de retrait
+                document.getElementById("withdrawal-balance").textContent = "Solde de retrait: " + withdrawalBalance + " FCFA";
+            }
+
+            document.getElementById("result").innerHTML = resultHTML;
+            document.getElementById("withdraw-button").style.display = "block"; // Afficher le bouton de retrait
+        }
+
+        // Fonction pour retirer le solde avec TVA de 10%
+        function withdraw() {
+            if (withdrawalBalance > 0) {
+                // Demander la confirmation pour payer la TVA de 10%
+                const confirmWithdraw = confirm("Vous allez retirer " + withdrawalBalance + " FCFA. Cela inclut une TVA de 10%. Voulez-vous continuer ?");
+                if (confirmWithdraw) {
+                    // Calcul de la TVA de 10% et du montant à retirer
+                    const tva = 0.1 * withdrawalBalance;
+                    const amountAfterTax = withdrawalBalance - tva;
+
+                    // Afficher un message avec le montant final
+                    alert("Montant à retirer après TVA (10%): " + amountAfterTax.toFixed(2) + " FCFA");
+
+                    // Réinitialiser les soldes après retrait
+                    withdrawalBalance = 0;
+                    document.getElementById("withdrawal-balance").textContent = "Solde de retrait: " + withdrawalBalance + " FCFA";
+                    balance = 1000;  // Réinitialiser le solde de mise
+                    document.getElementById("balance").textContent = "Solde de mise: " + balance + " FCFA";
+                    resetGame();
+                }
+            } else {
+                alert("Vous n'avez aucun solde à retirer.");
+            }
+        }
+
+        // Fonction pour réinitialiser le jeu
+        function resetGame() {
+            currentQuestionIndex = 0;
+            userResponses.length = 0;
+            document.getElementById("result").innerHTML = "";
+            document.getElementById("question-container").style.display = "block";
+            displayQuestion();
+        }
+
+        // Initialisation
+        displayQuestion();
+    </script>
+
+
+</body></html>
